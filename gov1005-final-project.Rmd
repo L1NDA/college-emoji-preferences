@@ -1,0 +1,22 @@
+---
+title: "Harvard Student Emoji Usage"
+author: "Linda Qin"
+date: "2/27/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## About This Project
+
+### The World of Emojis
+- Language and communication
+- Number of emojis; how to people choose?
+- What events/circles affect your usage of emojis?
+- Inspiration
+
+### Data Collection
+
+### About Linda Qin
