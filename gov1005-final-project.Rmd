@@ -52,6 +52,8 @@ Emoji preference data was collected through a short, 1-minute survey, [linked he
 
 Responses to the survey were collected from the Harvard undergraduate community through various social circles, commons classes such as Gov1005, and house email lists. Currently, `r emoji_data_count` individuals have responded, with the goal of reaching at least 100 by the end of the survey period.
 
+<b>Update:</b> So far, I have updated the data with the newest entries. Due to thesis work, I have not been able to analyze the data outside of ongoing data collection.
+
 #### Noise in Data
 
 A difficulty in collecting emoji preferences is the question of how to measure this in an objective way. I decided to limit participants to iPhone users because Apple has a standard formula of calculating its ‘frequently used emojis’ section. This provides a more quantitative method of understanding emoji use, rather than asking for the respondents’ own perception of their use. As Apple’s ‘frequently used emojis’ section is actually a mix of both frequently and recently used emojis, the responses were limited to the first two columns of the section (as Apple has indicated this as the ordering of emoji frequency). However, there is still the possibility of noise in this data from the (seeping in) of recently used emojis, such as a respondent who had Ice + Land in her response due to her recent messages about a spring break trip to Iceland. 
