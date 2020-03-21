@@ -83,40 +83,63 @@ Furthermore, due to the limited reach of the author, the sample of students is n
 
 Linda is a senior in Winthrop House studying Computer Science & Mind, Brain and Behavior, with a secondary in Economics. Her favorite emoji is `r emo::ji("new moon face")`, and the rest of her bio can be summed up very nicely by her most frequently used emojis: `r emo::ji("smiling face with smiling eyes")` `r emo::ji("pleading_face")` `r emo::ji("eyes")` `r emo::ji("woman gesturing OK")` `r emo::ji("loudly crying face")` `r emo::ji("sneezing face")` `r emo::ji("smiling_face_with_3_hearts")` `r emo::ji("grinning face with sweat")` `r emo::ji("peace")` `r emo::ji("heavy_heart_exclamation")`.
 
-```{r View}
+```{r}
 emoji_data
 ```
 
-```{r Conversion}
-
-emoji_data$emojis <- iconv(emoji_data$emojis, from = "latin1", to = "ascii", sub = "byte")
-
+```{r Add Space Between Each Character}
+emoji_data$emojis <- sub("\\s+$", "", gsub('(.{1})', '\\1 ', emoji_data$emojis))
 ```
 
+```{r Remove Double Spaces}
 
-```{r Character Count}
+# Turn to normal data frame to work with
 
-emoji_data %>%
-  mutate(char_count = nchar(emojis))
+emoji_data <- as.data.frame(emoji_data)
+
+emoji_data$emojis <- gsub("  ", "", emoji_data$emojis)
 
 ```
-
 
 ```{r}
 emoji_data
 ```
 
 
-```{r Failed Separation}
+```{r Separate into Different Columns}
  
-emoji_data %>%
+emoji_data %<>%
   separate(emojis, 
            c("e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9", "e10", "other"), 
-           sep = c("f0", "e2"), 
+           sep = c(1,2,3,4,5,6,7,8,9,10), 
            remove = FALSE)
 
 ```
 
+```{r}
+rankings <- emoji_data %>%
+  group_by(e1) %>%
+  count(e1) %>%
+  arrange(desc(n))
+```
+
+```{r}
+rankings
+```
+
+
+```{r New Replace}
+emojireplace <- FindReplace(data = emoji_data, Var = "emojis", 
+                            replaceData = emoticons,
+                            from = "modified_r", to = "tag", 
+                            exact = FALSE)
+```
+
+```{r Failed Conversion}
+
+emoji_data$emojis <- iconv(emoji_data$emojis, from = "latin1", to = "ascii", sub = "byte")
+
+```
 
 ```{r Failed Replacements to Match}
 
@@ -131,8 +154,7 @@ emoticons$Codepoint <- gsub("\\+", "000", emoticons$Codepoint)
 
 ```
 
-
-```{r Remove Spaces Dictionary}
+```{r Failed Remove Spaces Dictionary}
 emoticons$tag %<>%
   str_replace_all(" ", "")
 ```
@@ -141,10 +163,6 @@ emoticons$tag %<>%
 
 emoticons$tag <- lapply(emoticons$tag, function(x) paste0(x, " "))
 
-```
-
-```{r Failed As Data Frame}
-emoji_data <- as.data.frame(emoji_data)
 ```
 
 ```{r Failed Replace Old System with New}
@@ -160,9 +178,4 @@ emojireplace <- FindReplace(data = emoji_data, Var = "emojis",
                             from = "utf8", to = "tag", 
                             exact = FALSE)
 
-```
-
-
-```{r}
-emojireplace
 ```
