@@ -9,6 +9,11 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(readr)
+library(magrittr)
+library(DataCombine)
+library(tidyverse)
+
+emoticons <- read.csv("emoji_decoder.csv", header = T)
 ```
 
 ```{r Data, echo=FALSE}
@@ -17,7 +22,6 @@ emoji_data <- read_csv("./raw-data/emoji-responses.csv",
                        col_types = cols(
                           Timestamp = col_character(),
                           `Please confirm that you are filling out this form on an iPhone before moving on with this study.` = col_character(),
-                          `Type, in order, the first two columns from your 'frequently used' emoji section.` = col_character(),
                           `Graduation Year` = col_double(),
                           Gender = col_character(),
                           `What house do you live in?` = col_character(),
@@ -29,6 +33,21 @@ emoji_data <- read_csv("./raw-data/emoji-responses.csv",
                        ))
 
 emoji_data_count <- nrow(emoji_data)
+
+# Renaming Columns
+
+emoji_data %<>% 
+  rename(time = "Timestamp",
+         confirm = "Please confirm that you are filling out this form on an iPhone before moving on with this study.",
+         emojis = "Type, in order, the first two columns from your 'frequently used' emoji section.",
+         year = "Graduation Year",
+         gender = "Gender",
+         house = "What house do you live in?",
+         ethnicity = "What best describes your ethnicity?",
+         state = "Where is your hometown / current residence area outside of Harvard located?",
+         concentration = "(Intended) Concentration(s)",
+         secondary = "Secondary (if applicable)",
+         email = "Email Address")
 
 ```
 
@@ -63,3 +82,87 @@ Furthermore, due to the limited reach of the author, the sample of students is n
 ### About Linda Qin
 
 Linda is a senior in Winthrop House studying Computer Science & Mind, Brain and Behavior, with a secondary in Economics. Her favorite emoji is `r emo::ji("new moon face")`, and the rest of her bio can be summed up very nicely by her most frequently used emojis: `r emo::ji("smiling face with smiling eyes")` `r emo::ji("pleading_face")` `r emo::ji("eyes")` `r emo::ji("woman gesturing OK")` `r emo::ji("loudly crying face")` `r emo::ji("sneezing face")` `r emo::ji("smiling_face_with_3_hearts")` `r emo::ji("grinning face with sweat")` `r emo::ji("peace")` `r emo::ji("heavy_heart_exclamation")`.
+
+```{r View}
+emoji_data
+```
+
+```{r Conversion}
+
+emoji_data$emojis <- iconv(emoji_data$emojis, from = "latin1", to = "ascii", sub = "byte")
+
+```
+
+
+```{r Character Count}
+
+emoji_data %>%
+  mutate(char_count = nchar(emojis))
+
+```
+
+
+```{r}
+emoji_data
+```
+
+
+```{r Failed Separation}
+ 
+emoji_data %>%
+  separate(emojis, 
+           c("e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9", "e10", "other"), 
+           sep = c("f0", "e2"), 
+           remove = FALSE)
+
+```
+
+
+```{r Failed Replacements to Match}
+
+# change U+1F469 U+200D U+1F467 to \U1F469\U200D\U1F467
+
+emoticons$Codepoint <- gsub("\\+", "000", emoticons$Codepoint)
+
+# tried to add a space with a backslash but can't get it to work
+
+# test <- gsub("\U", " ", "\U0001f440\U0001f646", fixed = TRUE)
+  
+
+```
+
+
+```{r Remove Spaces Dictionary}
+emoticons$tag %<>%
+  str_replace_all(" ", "")
+```
+
+```{r Failed Add Space}
+
+emoticons$tag <- lapply(emoticons$tag, function(x) paste0(x, " "))
+
+```
+
+```{r Failed As Data Frame}
+emoji_data <- as.data.frame(emoji_data)
+```
+
+```{r Failed Replace Old System with New}
+emojireplace <- FindReplace(data = emoji_data, Var = "emojis", 
+                            replaceData = emoticons,
+                            from = "ftu8", to = "utf8", 
+                            exact = FALSE)
+```
+
+```{r Failed Replace with Tag}
+emojireplace <- FindReplace(data = emoji_data, Var = "emojis", 
+                            replaceData = emoticons,
+                            from = "utf8", to = "tag", 
+                            exact = FALSE)
+
+```
+
+
+```{r}
+emojireplace
+```
