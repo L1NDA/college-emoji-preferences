@@ -1,0 +1,71 @@
+#
+# This is the server logic of a Shiny web application. You can run the
+# application by clicking 'Run App' above.
+#
+# Find out more about building applications with Shiny here:
+#
+#    http://shiny.rstudio.com/
+#
+
+library(shiny)
+library(tidyverse)
+
+emoji_data <- read_csv("data-cleaned.csv",
+                       col_types = cols(
+                           time = col_character(),
+                           confirm = col_character(),
+                           all_emojis = col_character(),
+                           year = col_double(),
+                           gender = col_character(),
+                           house = col_character(),
+                           ethnicity = col_character(),
+                           residence = col_character(),
+                           concentration = col_character(),
+                           secondary = col_character(),
+                           email = col_character()
+                       ))
+
+emoji_data$all_emojis <- str_split(emoji_data$all_emojis, ",")
+emoji_data$all_emojis <- gsub("[^[:alnum:]_,]", "", emoji_data$all_emojis)
+emoji_data$all_emojis <- sub(".", "", emoji_data$all_emojis)
+
+emoji_data_separated <- emoji_data %>%
+    separate(all_emojis, c("first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"), 
+             sep=",", extra="drop")
+
+emoji_data_longer <- emoji_data_separated %>%
+    pivot_longer(names_to = "position", 
+                 values_to = "emoji_name",
+                 cols = c("first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"))
+
+emoji_summarized <- emoji_data_longer %>%
+    group_by(position, emoji_name) %>%
+    summarize(count = n()) %>%
+    arrange(emoji_name) %>%
+    filter(count > 1)
+
+print(emoji_summarized)
+
+# Define server logic required to draw a histogram
+shinyServer(function(input, output) {
+    
+
+    output$emojiPlot <- renderPlot({
+        
+        ggplot(emoji_summarized %>% 
+                   filter(position == input$variable), 
+                    aes(x = emoji_name, y = count)) + 
+        geom_col() +
+        coord_flip() +
+        expand_limits(y = 0) + 
+        scale_y_continuous(breaks=c(1:12)) +
+        labs(title = paste("Frequency of", input$variable, "most commonly used emojis"),
+             subtitle = paste("Of all emojis with a count > 2 in the", input$variable, "position"),
+             y = "Count",
+             x = "Emoji Name") +
+        theme_classic() + 
+        theme(legend.position="none")
+        
+    })
+
+})

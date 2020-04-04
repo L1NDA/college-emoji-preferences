@@ -13,6 +13,7 @@ library(magrittr)
 library(DataCombine)
 library(emojifont)
 library(tidyverse)
+library(gganimate)
 
 emoticons <- read.csv("emoji_decoder.csv", header = T)
 ```
@@ -52,6 +53,26 @@ emoji_data %<>%
 
 ```
 
+```{r New Data, echo=FALSE}
+
+emoji_data <- read_csv("./raw-data/data-cleaned.csv",
+                       col_types = cols(
+                        time = col_character(),
+                        confirm = col_character(),
+                        all_emojis = col_character(),
+                        year = col_double(),
+                        gender = col_character(),
+                        house = col_character(),
+                        ethnicity = col_character(),
+                        residence = col_character(),
+                        concentration = col_character(),
+                        secondary = col_character(),
+                        email = col_character()
+                      ))
+
+emoji_data_count <- nrow(emoji_data)
+
+```
 
 ## About This Project
 
@@ -84,6 +105,61 @@ Furthermore, due to the limited reach of the author, the sample of students is n
 
 Linda is a senior in Winthrop House studying Computer Science & Mind, Brain and Behavior, with a secondary in Economics. Her favorite emoji is `r emo::ji("new moon face")`, and the rest of her bio can be summed up very nicely by her most frequently used emojis: `r emo::ji("smiling face with smiling eyes")` `r emo::ji("pleading_face")` `r emo::ji("eyes")` `r emo::ji("woman gesturing OK")` `r emo::ji("loudly crying face")` `r emo::ji("sneezing face")` `r emo::ji("smiling_face_with_3_hearts")` `r emo::ji("grinning face with sweat")` `r emo::ji("peace")` `r emo::ji("heavy_heart_exclamation")`.
 
+```{r Pivot Wider}
+
+emoji_data$all_emojis <- str_split(emoji_data$all_emojis, ",")
+emoji_data$all_emojis <- gsub("[^[:alnum:]_,]", "", emoji_data$all_emojis)
+emoji_data$all_emojis <- sub(".", "", emoji_data$all_emojis)
+
+emoji_data_separated <- emoji_data %>%
+  separate(all_emojis, c("first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"), 
+           sep=",", extra="drop")
+
+```
+
+```{r Pivot Longer, echo = FALSE}
+
+emoji_data_longer <- emoji_data_separated %>%
+  pivot_longer(names_to = "position", 
+               values_to = "emoji_name",
+               cols = c("first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"))
+
+emoji_summarized <- emoji_data_longer %>%
+  group_by(position, emoji_name) %>%
+  summarize(count = n()) %>%
+  filter(count > 1)
+
+# emoji_summarized$position <- as.numeric(emoji_summarized$position)
+
+```
+
+
+```{r Plotting, echo = FALSE, fig.height=5}
+
+ggplot(emoji_summarized, aes(x = position, y = count, color = emoji_name)) + 
+  geom_point() +
+  geom_line() +
+  expand_limits(y = 0) + 
+  scale_x_continuous(name = "Nth most commonly used per person", breaks = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)) +
+  geom_text(aes(label = ifelse(count>2,as.character(emoji_name),'')), 
+            position = position_jitter(w=0, h=0.3)) + 
+  labs(title = "Frequency of nth most commonly used emojis",
+       subtitle = "Of all emojis with a frequency > 1",
+       y = "Count") +
+  theme_classic() + 
+  theme(legend.position="bottom") +
+  transition_reveal(position)
+
+```
+
+
+
+
+
+
+
+
+
 ```{r}
 emoji_data
 ```
@@ -102,7 +178,6 @@ emoji_data$emojis <- gsub("  ", "", emoji_data$emojis)
 
 ```
 
-
 ```{r Separate into Different Columns}
  
 emoji_data %<>%
@@ -120,11 +195,6 @@ rankings <- emoji_data %>%
   arrange(desc(n)) %>%
   head(8)
 ```
-
-```{r}
-rankings
-```
-
 
 ```{r Graphing}
 
@@ -185,7 +255,6 @@ ggplot(emoji_labels, aes(reorder(x, y), y, label=label)) +
   ) + 
   theme_classic()
 ```
-
 
 ```{r New Replace}
 emojireplace <- FindReplace(data = emoji_data, Var = "emojis", 
