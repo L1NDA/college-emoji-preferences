@@ -9,6 +9,9 @@
 
 library(shiny)
 library(tidyverse)
+library(knitr)
+library(emojifont)
+library(wordcloud2)
 
 emoji_data <- read_csv("data-cleaned.csv",
                        col_types = cols(
@@ -25,6 +28,8 @@ emoji_data <- read_csv("data-cleaned.csv",
                            email = col_character()
                        ))
 
+# Pivoting table wider so that there is one column for each emoji
+
 emoji_data$all_emojis <- str_split(emoji_data$all_emojis, ",")
 emoji_data$all_emojis <- gsub("[^[:alnum:]_,]", "", emoji_data$all_emojis)
 emoji_data$all_emojis <- sub(".", "", emoji_data$all_emojis)
@@ -32,6 +37,8 @@ emoji_data$all_emojis <- sub(".", "", emoji_data$all_emojis)
 emoji_data_separated <- emoji_data %>%
     separate(all_emojis, c("first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"), 
              sep=",", extra="drop")
+
+# Pivoting longer to create table with emoji use and order
 
 emoji_data_longer <- emoji_data_separated %>%
     pivot_longer(names_to = "position", 
@@ -44,10 +51,31 @@ emoji_summarized <- emoji_data_longer %>%
     arrange(emoji_name) %>%
     filter(count > 1)
 
-print(emoji_summarized)
+emoji_data_total <- emoji_data_longer %>%
+    group_by(emoji_name) %>%
+    summarize(count = n())
+
+emoji_data_total$emoji_name <- gsub("_", " ", emoji_data_total$emoji_name)
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
+    
+    output$aboutText <- renderUI({
+        HTML(markdown::markdownToHTML(knit('about-text.Rmd', quiet = TRUE)))
+    })
+    
+    output$wordcloud2 <- renderWordcloud2({
+        wordcloud2(data = emoji_data_total, fontFamily = "sans-serif", color = rep_len(c("salmon","lightpink", "lightblue", "orange"), nrow(emoji_data_total)))
+    })
+    
+    observeEvent(input$selectedWord, {
+        showModal(modalDialog(
+            title = gsub(":.*","",isolate(input$selected_word)),
+            "This is a somewhat important message.",
+            easyClose = TRUE,
+            footer = NULL
+        ))
+    })
     
 
     output$emojiPlot <- renderPlot({

@@ -12,10 +12,12 @@ library(readr)
 library(magrittr)
 library(DataCombine)
 library(emojifont)
+library(wordcloud2)
 library(tidyverse)
 library(gganimate)
 
 emoticons <- read.csv("emoji_decoder.csv", header = T)
+emoji_dict <- read.csv("emoji_dictionary.csv", header = T)
 ```
 
 ```{r Data, echo=FALSE}
@@ -130,6 +132,34 @@ emoji_summarized <- emoji_data_longer %>%
   filter(count > 1)
 
 # emoji_summarized$position <- as.numeric(emoji_summarized$position)
+
+```
+
+```{r Total}
+
+emoji_data_total <- emoji_data_longer %>%
+    group_by(emoji_name) %>%
+    summarize(count = n())
+
+emoji_data_total$emoji_name <- gsub("_", " ", emoji_data_total$emoji_name)
+
+wordcloud2(data = emoji_data_total, fontFamily = "sans-serif", color = rep_len(c("salmon","lightpink", "lightblue", "orange"), nrow(emoji_data_total)))
+# wordcloud2(data = etable)
+```
+
+```{r Matching to dictionary}
+emoji_data_total_translated <- emoji_data_total %>%
+  mutate(emoji_name = toupper(emoji_name))
+
+emoji_data_total_translated$emoji_name <- gsub("_", "", emoji_data_total_translated$emoji_name)
+
+emoji_data_total_translated <- as.data.frame(emoji_data_total_translated)
+emoji_data_total_translated %<>%
+  mutate(emoji_name = as.factor(count))
+matched <- FindReplace(data = emoji_data_total_translated, Var = "emoji_name", 
+                      replaceData = emoji_dict,
+                      from = "Number", to = "Codepoint", 
+                      exact = TRUE)
 
 ```
 

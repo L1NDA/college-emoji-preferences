@@ -8,24 +8,21 @@
 #
 
 library(shiny)
+library(markdown)
 
-ui <- fluidPage(
-    
-    titlePanel("Harvard Students x Most Frequently Used Emojis"),
-    
-    plotOutput("emojiPlot"),
-    
-    selectInput("variable", "Order:",
-                               list("First" = "first", 
-                                    "Second" = "second", 
-                                    "Third" = "third",
-                                    "Fourth" = "Fourth",
-                                    "Fifth" = "Fifth",
-                                    "Sixth" = "Sixth",
-                                    "Seventh" = "Seventh",
-                                    "Eighth" = "eighth",
-                                    "Ninth" = "ninth",
-                                    "Tenth" = "tenth")),
-    
+# aboutText <- includeMarkdown("about-text.Rmd")
+
+tab2 <- fluidPage(wordcloud2Output('wordcloud2', width="100%", height="600px"),
+        tags$script(HTML(
+          "$(document).on('click', '#canvas', function() {",
+          'word = document.getElementById("wordcloud2wcSpan").innerHTML;',
+          "Shiny.onInputChange('selectedWord', word);",
+          "});"
+        )))
+
+ui <- navbarPage("The Language of Emojis",
+                 tabPanel("About this project", uiOutput('aboutText')),
+                 tabPanel("Overall emoji use", tab2),
+                 tabPanel("Emoji use by concentration")
 )
 
