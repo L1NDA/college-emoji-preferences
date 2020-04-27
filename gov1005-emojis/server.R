@@ -12,6 +12,7 @@ library(tidyverse)
 library(knitr)
 library(emojifont)
 library(wordcloud2)
+library(scales)
 
 emoji_data <- read_csv("data-cleaned.csv",
                        col_types = cols(
@@ -57,6 +58,10 @@ emoji_data_total <- emoji_data_longer %>%
 
 emoji_data_total$emoji_name <- gsub("_", " ", emoji_data_total$emoji_name)
 
+emoji_data_specifics <- emoji_data_longer
+
+emoji_data_specifics$emoji_name <- gsub("_", " ", emoji_data_specifics$emoji_name)
+
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
     
@@ -65,13 +70,34 @@ shinyServer(function(input, output) {
     })
     
     output$wordcloud2 <- renderWordcloud2({
-        wordcloud2(data = emoji_data_total, fontFamily = "sans-serif", color = rep_len(c("salmon","lightpink", "lightblue", "orange"), nrow(emoji_data_total)))
+        wordcloud2(data = emoji_data_total, 
+                   fontFamily = "sans-serif", 
+                   color = rep_len(c("salmon","lightpink", "lightblue", "orange"), 
+                                  nrow(emoji_data_total)))
     })
     
     observeEvent(input$selectedWord, {
+        cleanedInput <- gsub(":.*","",isolate(input$selectedWord))
         showModal(modalDialog(
-            title = gsub(":.*","",isolate(input$selected_word)),
-            "This is a somewhat important message.",
+            title = "Emoji-specific Information",
+            tags$img(
+                src = base64enc::dataURI(file = paste0("./emoji-imgs/", cleanedInput, ".png"),
+                                         mime = "image/png"),
+                height = "50px",
+                align = "center"),
+            renderText(cleanedInput),
+            selectInput("demographic", "", c("gender", "concentration", "year")),
+            renderPlot({
+                demographic <- input$demographic
+
+                ggplot(emoji_data_specifics %>%
+                            filter(emoji_name == cleanedInput), aes_string(demographic)) +
+                    geom_bar() +
+                    theme_classic() +
+                    scale_y_continuous(breaks = pretty_breaks()) + 
+                    coord_flip()
+                    
+            }),
             easyClose = TRUE,
             footer = NULL
         ))

@@ -10,19 +10,23 @@
 library(shiny)
 library(markdown)
 
-# aboutText <- includeMarkdown("about-text.Rmd")
+aboutText <- includeMarkdown("about-text.Rmd")
 
-tab2 <- fluidPage(wordcloud2Output('wordcloud2', width="100%", height="600px"),
-        tags$script(HTML(
-          "$(document).on('click', '#canvas', function() {",
-          'word = document.getElementById("wordcloud2wcSpan").innerHTML;',
-          "Shiny.onInputChange('selectedWord', word);",
-          "});"
-        )))
+tab2 <- fluidPage(title = "Overview of responses",
+                  subtitle = "Click on a word to see specific details",
+                  wordcloud2Output('wordcloud2', height="600px", width = "100%"),
+                      tags$script(HTML(
+                        "$(document).on('click', '#canvas', function() {",
+                        'word = document.getElementById("wordcloud2wcSpan").innerHTML;',
+                        "Shiny.onInputChange('selectedWord', word);",
+                        "});"
+                      )))
 
 ui <- navbarPage("The Language of Emojis",
-                 tabPanel("About this project", uiOutput('aboutText')),
-                 tabPanel("Overall emoji use", tab2),
-                 tabPanel("Emoji use by concentration")
+           tabPanel("About this project", fluidPage(uiOutput('aboutText'))),
+           tabPanel("Overall emoji use", tab2),
+            tabPanel("Emoji use by concentration"),
+          fluid = TRUE,
+          includeCSS("./www/emojis.css")
 )
 

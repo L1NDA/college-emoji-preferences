@@ -15,6 +15,8 @@ library(emojifont)
 library(wordcloud2)
 library(tidyverse)
 library(gganimate)
+library(igraph)
+library(networkD3)
 
 emoticons <- read.csv("emoji_decoder.csv", header = T)
 emoji_dict <- read.csv("emoji_dictionary.csv", header = T)
@@ -135,6 +137,19 @@ emoji_summarized <- emoji_data_longer %>%
 
 ```
 
+```{r Specific ggplots, echo = FALSE}
+
+emoji_data_specifics <- emoji_data_longer
+
+emoji_data_specifics$emoji_name <- gsub("_", " ", emoji_data_specifics$emoji_name)
+
+emoji_data_specifics %>%
+  filter(emoji_name == "eyes") %>%
+  ggplot(aes(concentration)) + geom_bar()
+
+```
+
+
 ```{r Total}
 
 emoji_data_total <- emoji_data_longer %>%
@@ -146,6 +161,31 @@ emoji_data_total$emoji_name <- gsub("_", " ", emoji_data_total$emoji_name)
 wordcloud2(data = emoji_data_total, fontFamily = "sans-serif", color = rep_len(c("salmon","lightpink", "lightblue", "orange"), nrow(emoji_data_total)))
 # wordcloud2(data = etable)
 ```
+
+```{r Connections}
+
+emoji_data_connections <- emoji_data_separated %>%
+  select("first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth")
+    
+emoji_data_connections_graph <- graph.data.frame(emoji_data_connections, directed = FALSE)
+
+# Remove duplicate edges
+emoji_data_connections_graph <- simplify(emoji_data_connections_graph)
+
+# Find group membership
+wt <- cluster_walktrap(SchoolsJournals, steps = 6)
+members <- membership(wt)
+
+# Convert igraph to list for networkD3
+sj_list <- igraph_to_networkD3(SchoolsJournals, group = members)
+
+# Plot as a forceDirected Network
+forceNetwork(Links = sj_list$links, Nodes = sj_list$nodes, Source = 'source',
+             Target = 'target', NodeID = 'name', Group = 'group',
+             zoom = TRUE, linkDistance = 200)
+
+```
+
 
 ```{r Matching to dictionary}
 emoji_data_total_translated <- emoji_data_total %>%
