@@ -173,14 +173,14 @@ emoji_data_connections_graph <- graph.data.frame(emoji_data_connections, directe
 emoji_data_connections_graph <- simplify(emoji_data_connections_graph)
 
 # Find group membership
-wt <- cluster_walktrap(SchoolsJournals, steps = 6)
+wt <- cluster_walktrap(emoji_data_connections_graph, steps = 6)
 members <- membership(wt)
 
 # Convert igraph to list for networkD3
-sj_list <- igraph_to_networkD3(SchoolsJournals, group = members)
+converted <- igraph_to_networkD3(emoji_data_connections_graph, group = members)
 
 # Plot as a forceDirected Network
-forceNetwork(Links = sj_list$links, Nodes = sj_list$nodes, Source = 'source',
+forceNetwork(Links = converted$links, Nodes = converted$nodes, Source = 'source',
              Target = 'target', NodeID = 'name', Group = 'group',
              zoom = TRUE, linkDistance = 200)
 

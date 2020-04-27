@@ -13,6 +13,10 @@ library(knitr)
 library(emojifont)
 library(wordcloud2)
 library(scales)
+library(igraph)
+library(networkD3)
+library(ggthemr)
+ggthemr('dust')
 
 emoji_data <- read_csv("data-cleaned.csv",
                        col_types = cols(
@@ -62,11 +66,32 @@ emoji_data_specifics <- emoji_data_longer
 
 emoji_data_specifics$emoji_name <- gsub("_", " ", emoji_data_specifics$emoji_name)
 
+# Information for emoji connections
+
+emoji_data_connections <- emoji_data_separated %>%
+    select("first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth")
+
+emoji_data_connections_graph <- graph.data.frame(emoji_data_connections, directed = FALSE)
+
+# Remove duplicate edges
+emoji_data_connections_graph <- simplify(emoji_data_connections_graph)
+
+# Find group membership
+wt <- cluster_walktrap(emoji_data_connections_graph, steps = 6)
+members <- membership(wt)
+
+# Convert igraph to list for networkD3
+converted <- igraph_to_networkD3(emoji_data_connections_graph, group = members)
+
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
     
     output$aboutText <- renderUI({
         HTML(markdown::markdownToHTML(knit('about-text.Rmd', quiet = TRUE)))
+    })
+    
+    output$aboutAuthor <- renderUI({
+        HTML(markdown::markdownToHTML(knit('about-author.Rmd', quiet = TRUE)))
     })
     
     output$wordcloud2 <- renderWordcloud2({
@@ -103,6 +128,12 @@ shinyServer(function(input, output) {
         ))
     })
     
+    output$network <- renderForceNetwork(
+
+        forceNetwork(Links = converted$links, Nodes = converted$nodes, Source = 'source',
+                     Target = 'target', NodeID = 'name', Group = 'group',
+                     zoom = TRUE, linkDistance = 200)
+    )
 
     output$emojiPlot <- renderPlot({
         
