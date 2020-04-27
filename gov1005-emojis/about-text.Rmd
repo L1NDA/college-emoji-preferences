@@ -77,18 +77,22 @@ total_concentrations <- emoji_data %>%
 
 concentrations <- tibble(concentration = factor(c(total_concentrations$concentration, "Other")),
                          count = c(total_concentrations$count, emoji_data_count - 31)) %>%
-  ggplot(aes(concentration, count)) + geom_col() +
-  labs(title = "Top Concentrations") + coord_flip()
+  ggplot(aes(x = reorder(concentration, -count), count)) + geom_col() +
+  labs(title = "Top Concentrations",
+       x = "concentration") + coord_flip()
 
 secondary <- emoji_data %>%
   select(secondary) %>%
-  ggplot(aes(secondary)) + geom_bar() +
-  labs(title = "Secondary") + coord_flip()
+  ggplot(aes(x = reorder(secondary,secondary,
+                     function(x)-length(x)))) + geom_bar() +
+  labs(title = "Secondary",
+       x = "secondary") + coord_flip()
 
 ethnicity <- emoji_data %>%
   select(ethnicity) %>%
-  ggplot(aes(ethnicity)) + geom_bar() +
-  labs(title = "Ethnicity") + coord_flip()
+  ggplot(aes(x = reorder(ethnicity, ethnicity, function(x) - length(x)))) + geom_bar() +
+  labs(title = "Ethnicity",
+       x = "ethnicity") + coord_flip()
 
 residence <- emoji_data %>%
   select(residence) %>%

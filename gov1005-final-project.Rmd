@@ -186,6 +186,172 @@ forceNetwork(Links = converted$links, Nodes = converted$nodes, Source = 'source'
 
 ```
 
+```{r Love, echo = FALSE}
+
+library(ggimage)
+ggthemr_reset()
+
+heart_plot <- emoji_data_longer %>%
+  filter(grepl('heart', emoji_name, fixed = TRUE)) %>%
+  group_by(emoji_name, position, gender, year) %>%
+  summarize(count = n())
+  
+heart_plot$position <- factor(heart_plot$position, 
+                              levels = c("first","second","third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"))
+
+total_year <- emoji_data_separated %>%
+  group_by(year) %>%
+  summarize(yearcount = n())
+  
+heart_plot %>%
+  group_by(emoji_name, year) %>%
+  summarize(count = n()) %>%
+  mutate(fraction = case_when(year == 2020 ~ count / 18,
+                              year == 2021 ~ count / 8,
+                              year == 2022 ~ count / 8,
+                              year == 2023 ~ count / 11
+                              )) %>%
+  ggplot(aes(x = reorder(emoji_name, fraction), y = fraction)) + 
+  geom_col(position = position_dodge2(width = 1, preserve = "single"), aes(fill = year)) +
+  geom_emoji(aes(image = case_when(emoji_name == 'sparkling_heart' ~ '1f496',
+                                   emoji_name == 'red_heart' ~ '2764',
+                                   emoji_name == 'beating_heart' ~ '1f493',
+                                   emoji_name == 'yellow_heart' ~ '1f49b',
+                                   emoji_name == 'purple_heart' ~ '1f49c',
+                                   emoji_name == 'heart_with_arrow' ~ '1f498',
+                                   emoji_name == 'heavy_heart_exclamation' ~ '1f495',
+                                   emoji_name == 'revolving_hearts' ~ '1f49e',
+                                   emoji_name == 'smiling_cat_face_with_hearteyes' ~ '1f63b',
+                                   emoji_name == 'smiling_face_with_3_hearts' ~ '263a',
+                                   emoji_name == 'smiling_face_with_hearteyes' ~ '1f60d',
+                                   emoji_name == 'two_hearts' ~ '1f495',)),
+             position = position_dodge2(width = 1, preserve = "single")) +
+  labs(title = "Heart Frequency in Commonly Used Emojis",
+       x = "emoji name") + 
+  coord_flip()
+
+```
+
+```{r Faces}
+
+faces_plot <- emoji_data_longer %>%
+  filter(grepl('face', emoji_name, fixed = TRUE)) %>%
+  group_by(emoji_name, position, gender, year, residence, house) %>%
+  summarize(count = n())
+  
+faces_plot$position <- factor(faces_plot$position, 
+                              levels = c("first","second","third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"))
+
+faces_plot %>%
+  group_by(emoji_name, house) %>%
+  summarize(count = n()) %>%
+  filter(count > 2) %>%
+  ggplot(aes(x = reorder(emoji_name, count), y = count)) + 
+  geom_col(position = position_dodge2(width = 1, preserve = "single"), aes(fill = house)) +
+  coord_flip() +
+  labs(title = "Most Frequently Used Faces",
+                 x = "emoji name")
+
+```
+
+```{r House}
+
+faces_plot <- emoji_data_longer %>%
+  filter(grepl('face', emoji_name, fixed = TRUE))
+  
+faces_plot$position <- factor(faces_plot$position, 
+                              levels = c("first","second","third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"))
+
+faces_plot %>%
+  group_by(emoji_name, year) %>%
+  summarize(count = n()) %>%
+  nest() %>%
+  mutate(total_count = map(data, ~sum(.$count))) %>%
+  unnest(cols = c(data, total_count)) %>%
+  filter(total_count > 4) %>%
+  mutate(fraction = case_when(year == 2020 ~ count / 18,
+                              year == 2021 ~ count / 8,
+                              year == 2022 ~ count / 8,
+                              year == 2023 ~ count / 11
+                              )) %>%
+  ggplot(aes(x = reorder(emoji_name, fraction), y = fraction)) + 
+  geom_col(position = position_dodge2(width = 1, preserve = "single")) +
+  coord_flip() +
+  labs(title = "Most Frequently Used Faces",
+                 x = "emoji name") +
+  facet_wrap(~year)
+
+total_houses <- emoji_data_separated %>%
+  group_by(house) %>%
+  summarize(housecount = n()) %>%
+  arrange(desc(housecount))
+
+faces_plot %>%
+  group_by(emoji_name, house) %>%
+  summarize(count = n()) %>%
+  filter(house == "Winthrop" | house == "Adams" | house == "Freshman Housing" | house == "Eliot") %>%
+  nest() %>%
+  mutate(total_count = map(data, ~sum(.$count))) %>%
+  unnest(cols = c(data, total_count)) %>%
+  filter(total_count > 4) %>%
+  mutate(fraction = case_when(house == "Winthrop" ~ count / 12,
+                              house == "Freshman Housing" ~ count / 11,
+                              house == "Eliot" ~ count / 7,
+                              house == "Adams" ~ count / 4
+                              )) %>%
+  ggplot(aes(x = reorder(emoji_name, fraction), y = fraction)) + 
+  geom_col(position = position_dodge2(width = 1, preserve = "single")) +
+  coord_flip() +
+  labs(title = "Most Frequently Used Faces",
+                 x = "emoji name") +
+  facet_wrap(~house)
+
+total_states <- emoji_data_separated %>%
+  group_by(residence) %>%
+  summarize(statecount = n()) %>%
+  arrange(desc(statecount))
+
+faces_plot %>%
+  group_by(emoji_name, residence) %>%
+  summarize(count = n()) %>%
+  filter(residence == "California" | residence == "New York" | residence == "Massachusetts" | residence == "Texas") %>%
+  nest() %>%
+  mutate(total_count = map(data, ~sum(.$count))) %>%
+  unnest(cols = c(data, total_count)) %>%
+  filter(total_count > 4) %>%
+  mutate(fraction = case_when(residence == "California" ~ count / 10,
+                              residence == "New York" ~ count / 8,
+                              residence == "Massachusetts" ~ count / 5,
+                              residence == "Texas" ~ count / 4
+                              )) %>%
+  ggplot(aes(x = reorder(emoji_name, fraction), y = fraction)) + 
+  geom_col(position = position_dodge2(width = 1, preserve = "single")) +
+  coord_flip() +
+  labs(title = "Most Frequently Used Faces by State",
+                 x = "emoji name") +
+  facet_wrap(~residence)
+
+total_gender <- emoji_data_separated %>%
+  group_by(gender) %>%
+  summarize(gendercount = n())
+
+faces_plot %>%
+  group_by(emoji_name, gender) %>%
+  summarize(count = n()) %>%
+  nest() %>%
+  mutate(total_count = map(data, ~sum(.$count))) %>%
+  unnest(cols = c(data, total_count)) %>%
+  filter(total_count > 4) %>%
+  mutate(fraction = case_when(gender == "Female" ~ count / 31,
+                              gender == "Male" ~ count / 14)) %>%
+  ggplot(aes(x = reorder(emoji_name, fraction), y = fraction)) + 
+  geom_col(position = position_dodge2(width = 1, preserve = "single")) +
+  coord_flip() +
+  labs(title = "Most Frequently Used Faces by Gender",
+                 x = "emoji name") +
+  facet_wrap(~gender)
+
+```
 
 ```{r Matching to dictionary}
 emoji_data_total_translated <- emoji_data_total %>%
